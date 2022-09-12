@@ -3,7 +3,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const dbConfig = require("../config")[process.env.NODE_ENV];
 const Roles = require("./models/roles")
 
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {host : dbConfig.host, dialect: dbConfig.dialect, dialectOptions:{allowPublicKeyRetrieval: true} });
+const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {host : dbConfig.host, dialect: dbConfig.dialect, dialectOptions:{allowPublicKeyRetrieval: dbConfig.allowPublicKeyRetrieval} });
 
 const authenticateDB = async () => {
     try {
