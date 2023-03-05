@@ -1,7 +1,9 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const SessionController = require("./session-controller");
+const SessionController = require('./session-controller');
 
-router.get("/login", SessionController.login);
+router.post('/login', SessionController.login);
+router.post('/logout', SessionController.logout);
+router.post('/refresh-token', SessionController.refreshToken);
 
 module.exports = router;
