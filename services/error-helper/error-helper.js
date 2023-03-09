@@ -10,12 +10,17 @@ const ErrorHelper = {
 	COGNITO_ERRORS: {
 		NOT_AUTHORIZED: 'NotAuthorizedException',
 		INVALID_TOKEN: 'Invalid token specified',
+		EXPIRED_CODE: 'ExpiredCodeException',
 	},
 
 	getErrorStatus(error) {
 		if (error.name === this.COGNITO_ERRORS.NOT_AUTHORIZED) {
 			return this.ERROR_STATUS_CODES.UNAUTHORIZED;
 		}
+		if (error.name === this.COGNITO_ERRORS.EXPIRED_CODE) {
+			return this.ERROR_STATUS_CODES.UNAUTHORIZED;
+		}
+
 		if (error.error?.message === this.COGNITO_ERRORS.INVALID_TOKEN) {
 			return this.ERROR_STATUS_CODES.UNAUTHORIZED;
 		}

@@ -4,8 +4,13 @@ const Config = require('../../config');
 const jwtDecode = require('jwt-decode');
 
 const CognitoHelper = {
-	async login(username, password) {
+	async login(username, password, otp) {
 		try {
+			if (otp) {
+				const confirmAccount = await this.confirmAccount(otp, username);
+				if (confirmAccount.error) return { ...confirmAccount, error: true };
+			}
+
 			const authenticationData = {
 				Username: username,
 				Password: password,
@@ -72,7 +77,7 @@ const CognitoHelper = {
 			return cognitoIdentityServiceProvider.globalSignOut(params).promise();
 		} catch (error) {
 			console.error(error);
-			return error;
+			return { ...error, error: true };
 		}
 	},
 
@@ -114,7 +119,68 @@ const CognitoHelper = {
 		} catch (error) {
 			console.log('refreshtokenerror');
 			console.error(error);
-			return { error: true, error };
+			return { ...error, error: true };
+		}
+	},
+
+	async signUp(username, email, password) {
+		try {
+			const poolData = {
+				UserPoolId: Config.UserPoolId,
+				ClientId: Config.ClientId,
+			};
+			const userPool = new CognitoUserPool(poolData);
+
+			const emailAttribute = [{ Name: 'email', Value: email }];
+
+			const cognitoSignUpInfo = await new Promise((resolve, reject) => {
+				return userPool.signUp(username, password, emailAttribute, null, (err, result) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+
+					resolve(result.user);
+				});
+			});
+
+			console.log('cognitoSignUpInfo', cognitoSignUpInfo);
+
+			return {};
+		} catch (error) {
+			console.error(error);
+			return { ...error, error: true };
+		}
+	},
+
+	async confirmAccount(otp, username) {
+		try {
+			const poolData = {
+				UserPoolId: Config.UserPoolId,
+				ClientId: Config.ClientId,
+			};
+			const userPool = new CognitoUserPool(poolData);
+
+			const userData = {
+				Username: username,
+				Pool: userPool,
+			};
+			const cognitoUser = new CognitoUser(userData);
+
+			const cognitoConfirm = await new Promise((resolve, reject) => {
+				return cognitoUser.confirmRegistration(otp, true, (err, result) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+
+					resolve(result);
+				});
+			});
+			return !!cognitoConfirm;
+		} catch (error) {
+			console.error(error);
+			return { ...error, error: true };
 		}
 	},
 };
