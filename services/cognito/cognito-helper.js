@@ -94,11 +94,11 @@ const CognitoHelper = {
 		try {
 			const accessToken = jwtDecode(access_token);
 			if (!this.isTokenExpired(accessToken)) {
-				console.log('access token not expired');
+				console.log('::Access token not expired');
 				return;
 			}
 
-			console.log('access token IS expired');
+			console.log('::Access token IS expired');
 			const params = {
 				UserPoolId: Config.UserPoolId,
 				ClientId: Config.ClientId,
@@ -109,11 +109,11 @@ const CognitoHelper = {
 			};
 			AWS.config.update({ region: 'us-east-1' });
 			const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
-			const data = await cognitoIdentityServiceProvider.adminInitiateAuth(params).promise();
+			const refreshData = await cognitoIdentityServiceProvider.adminInitiateAuth(params).promise();
 
 			const result = {};
-			result['access_token'] = data.AuthenticationResult.AccessToken;
-			result['id_token'] = data.AuthenticationResult.IdToken;
+			result['access_token'] = refreshData.AuthenticationResult.AccessToken;
+			result['id_token'] = refreshData.AuthenticationResult.IdToken;
 			result['refresh_token'] = refresh_token;
 			return result;
 		} catch (error) {
@@ -133,7 +133,7 @@ const CognitoHelper = {
 
 			const emailAttribute = [{ Name: 'email', Value: email }];
 
-			const cognitoSignUpInfo = await new Promise((resolve, reject) => {
+			await new Promise((resolve, reject) => {
 				return userPool.signUp(username, password, emailAttribute, null, (err, result) => {
 					if (err) {
 						reject(err);
@@ -143,8 +143,6 @@ const CognitoHelper = {
 					resolve(result.user);
 				});
 			});
-
-			console.log('cognitoSignUpInfo', cognitoSignUpInfo);
 
 			return {};
 		} catch (error) {
