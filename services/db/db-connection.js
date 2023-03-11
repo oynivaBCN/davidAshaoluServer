@@ -1,38 +1,34 @@
 require('dotenv').config();
-const { Sequelize, DataTypes } = require('sequelize');
-const dbConfig = require('../../config')[process.env.NODE_ENV];
-const RolesModel = require('./models/roles');
+const mariadb = require('mariadb');
+const Config = require('../../config');
 
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-	host: dbConfig.host,
-	dialect: dbConfig.dialect,
-	dialectOptions: {
-		allowPublicKeyRetrieval: dbConfig.allowPublicKeyRetrieval,
-	},
+const pool = mariadb.createPool({
+	host: Config.db.host,
+	user: Config.db.username,
+	password: Config.db.password,
+	database: Config.db.database,
+	connectionLimit: 10,
 });
 
-const authenticateDB = async () => {
+const dbConn = async (dbQuery) => {
+	// console.log('Total connections start: ', pool.totalConnections());
+	let conn;
 	try {
-		await sequelize.authenticate();
-		console.log('Connection has been established successfully.');
-	} catch (error) {
-		console.error('Unable to connect to the database:', error);
+		conn = await pool.getConnection();
+		// console.log('Total connections get: ', pool.totalConnections());
+
+		return await conn.query(dbQuery);
+	} catch (err) {
+		console.error(err);
+	} finally {
+		if (conn) conn.end();
+		// console.log('Total connections end: ', pool.totalConnections());
+		// console.log('Active connections: ', pool.activeConnections());
+		// console.log('Idle connections: ', pool.idleConnections());
 	}
 };
 
-const Roles = RolesModel(sequelize, DataTypes);
+module.exports = { dbConn };
 
-// sequelize.sync().then(() => {
-//   // Roles.create({
-//   //     "role": "other"
-//     Roles.findAll({
-//   }).then(res => {
-//       console.log(res)
-//   }).catch((error) => {
-//       console.error('Failed: ', error);
-//   });
-// }).catch((error) => {
-//   console.error('Catch error: ', error);
-// });
-
-module.exports = { sequelize, authenticateDB };
+// RESOURCES
+// https://mariadb.com/docs/xpand/connect/programming-languages/nodejs/promise/connection-pools/https://mariadb.com/docs/xpand/connect/programming-languages/nodejs/promise/connection-pools/

@@ -1,4 +1,5 @@
 const CognitoHelper = require('../../services/cognito/cognito-helper');
+const { db } = require('../../services/db/db-entities');
 
 const SessionService = {
 	async login(username, password, otp) {
@@ -7,6 +8,11 @@ const SessionService = {
 
 		const { payload, tokens } = result;
 		const user = { sub: payload.sub, username: payload['cognito:username'] };
+
+		const resultDB = await db.users.getUserBySub(payload.sub);
+		user.id = resultDB.id;
+		user.role = resultDB.role;
+
 		return { user, tokens };
 	},
 
@@ -20,7 +26,11 @@ const SessionService = {
 	},
 
 	async signUp(username, email, password) {
-		return await CognitoHelper.signUp(username, email, password);
+		const cognitoSubOnSignUp = await CognitoHelper.signUp(username, email, password);
+		if (!cognitoSubOnSignUp.error) {
+			await db.users.createUser(cognitoSubOnSignUp, 'student');
+		}
+		return {};
 	},
 };
 
