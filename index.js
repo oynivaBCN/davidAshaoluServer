@@ -4,10 +4,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const Routes = require('./routes');
 const Config = require('./config');
-// const DADB = require('./db/db-connection');
-
-// DADB.sequelize
-// DADB.authenticateDB();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

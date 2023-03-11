@@ -18,8 +18,8 @@ const CognitoHelper = {
 			const authenticationDetails = new AuthenticationDetails(authenticationData);
 
 			const poolData = {
-				UserPoolId: Config.UserPoolId,
-				ClientId: Config.ClientId,
+				UserPoolId: Config.aws.UserPoolId,
+				ClientId: Config.aws.ClientId,
 			};
 			const userPool = new CognitoUserPool(poolData);
 
@@ -100,8 +100,8 @@ const CognitoHelper = {
 
 			console.log('::Access token IS expired');
 			const params = {
-				UserPoolId: Config.UserPoolId,
-				ClientId: Config.ClientId,
+				UserPoolId: Config.aws.UserPoolId,
+				ClientId: Config.aws.ClientId,
 				AuthFlow: 'REFRESH_TOKEN_AUTH',
 				AuthParameters: {
 					REFRESH_TOKEN: refresh_token,
@@ -126,25 +126,22 @@ const CognitoHelper = {
 	async signUp(username, email, password) {
 		try {
 			const poolData = {
-				UserPoolId: Config.UserPoolId,
-				ClientId: Config.ClientId,
+				UserPoolId: Config.aws.UserPoolId,
+				ClientId: Config.aws.ClientId,
 			};
 			const userPool = new CognitoUserPool(poolData);
 
 			const emailAttribute = [{ Name: 'email', Value: email }];
 
-			await new Promise((resolve, reject) => {
+			return await new Promise((resolve, reject) => {
 				return userPool.signUp(username, password, emailAttribute, null, (err, result) => {
 					if (err) {
 						reject(err);
 						return;
 					}
-
-					resolve(result.user);
+					resolve(result.userSub);
 				});
 			});
-
-			return {};
 		} catch (error) {
 			console.error(error);
 			return { ...error, error: true };
@@ -154,8 +151,8 @@ const CognitoHelper = {
 	async confirmAccount(otp, username) {
 		try {
 			const poolData = {
-				UserPoolId: Config.UserPoolId,
-				ClientId: Config.ClientId,
+				UserPoolId: Config.aws.UserPoolId,
+				ClientId: Config.aws.ClientId,
 			};
 			const userPool = new CognitoUserPool(poolData);
 
