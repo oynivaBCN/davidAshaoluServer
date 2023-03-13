@@ -16,7 +16,6 @@ const dbConn = async (dbQuery) => {
 	try {
 		conn = await pool.getConnection();
 		// console.log('Total connections get: ', pool.totalConnections());
-
 		return await conn.query(dbQuery);
 	} catch (err) {
 		console.error(err);
