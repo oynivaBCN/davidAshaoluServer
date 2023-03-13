@@ -1,5 +1,5 @@
 const CognitoHelper = require('../../services/cognito/cognito-helper');
-const { db } = require('../../services/db/db-entities');
+const { db } = require('../../services/db/db-queries.js');
 
 const SessionService = {
 	async login(username, password, otp) {
