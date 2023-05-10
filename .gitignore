@@ -6,5 +6,8 @@
 # config
 /config
 
+# init
+/scripts/init.js
+
 # .env
 .env

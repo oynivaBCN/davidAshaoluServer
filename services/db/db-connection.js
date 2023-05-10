@@ -1,33 +1,75 @@
 require('dotenv').config();
 const mariadb = require('mariadb');
 const Config = require('../../config');
+const { createTunnel } = require('tunnel-ssh');
+const fs = require('fs');
 
-const pool = mariadb.createPool({
-	host: Config.db.host,
-	user: Config.db.username,
-	password: Config.db.password,
-	database: Config.db.database,
-	connectionLimit: 10,
-});
+const host = '127.0.0.1';
+const port = 3306;
 
-const dbConn = async (dbQuery) => {
-	// console.log('Total connections start: ', pool.totalConnections());
-	let conn;
+const tunnelOptions = {
+	autoClose: true,
+};
+
+const serverOptions = {
+	host,
+	port,
+	keepAlive: true,
+};
+
+const sshOptions = {
+	host: Config.ec2.ec2InstanceIP,
+	username: Config.ec2.ec2InstanceUsername,
+	port: Config.ec2.port,
+	privateKey: fs.readFileSync(process.env.PATH_TO_PRIVATE_KEY),
+	readyTimeout: 100000,
+};
+
+const forwardOptions = {
+	srcAddr: host,
+	srcPort: port,
+	dstAddr: Config.db.host,
+	dstPort: Config.db.port,
+};
+
+const connectToRds = async (dbQuery, dbParams = null) => {
 	try {
-		conn = await pool.getConnection();
-		// console.log('Total connections get: ', pool.totalConnections());
-		return await conn.query(dbQuery);
-	} catch (err) {
-		console.error(err);
-	} finally {
-		if (conn) conn.end();
-		// console.log('Total connections end: ', pool.totalConnections());
-		// console.log('Active connections: ', pool.activeConnections());
-		// console.log('Idle connections: ', pool.idleConnections());
+		await createTunnel(tunnelOptions, serverOptions, sshOptions, forwardOptions);
+		console.log('SSH tunnel established');
+
+		let pool;
+		let conn;
+		try {
+			pool = mariadb.createPool({
+				//  host: Config.db.host,
+				//  port: Config.db.port,
+				user: Config.db.username,
+				password: Config.db.password,
+				database: Config.db.database,
+				debug: true,
+				connectionLimit: 5,
+				idleTimeout: 30000,
+				acquireTimeout: 30000,
+				socketTimeout: 40000,
+				connectTimeout: 90000,
+				trace: true,
+			});
+			conn = await pool.getConnection();
+			console.log('Total connections start INIT: ', pool.totalConnections());
+			const rows = dbParams ? await conn.query(dbQuery, dbParams) : await conn.query(dbQuery);
+			return rows;
+		} catch (error) {
+			console.error('db-err::', error);
+		} finally {
+			if (conn) conn.end();
+			if (pool) pool.end();
+		}
+	} catch (error) {
+		console.error('ssh-err::', error);
 	}
 };
 
-module.exports = { dbConn };
+module.exports = { connectToRds };
 
 // RESOURCES
-// https://mariadb.com/docs/xpand/connect/programming-languages/nodejs/promise/connection-pools/https://mariadb.com/docs/xpand/connect/programming-languages/nodejs/promise/connection-pools/
+// https://mariadb.com/docs/xpand/connect/programming-languages/nodejs/promise/connection-pools/

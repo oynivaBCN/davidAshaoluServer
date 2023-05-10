@@ -10,8 +10,8 @@ const SessionService = {
 		const user = { sub: payload.sub, username: payload['cognito:username'] };
 
 		const resultDB = await db.users.getUserBySub(payload.sub);
-		user.id = resultDB.id;
-		user.role = resultDB.role;
+		user.id = resultDB?.id;
+		user.role = resultDB?.role;
 
 		return { user, tokens };
 	},
