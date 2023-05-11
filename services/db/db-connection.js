@@ -4,16 +4,16 @@ const Config = require('../../config');
 const { createTunnel } = require('tunnel-ssh');
 const fs = require('fs');
 
-const host = '127.0.0.1';
-const port = 3306;
+const HOST = '127.0.0.1';
+const PORT = 3306;
 
 const tunnelOptions = {
 	autoClose: true,
 };
 
 const serverOptions = {
-	host,
-	port,
+	host: HOST,
+	port: PORT,
 	keepAlive: true,
 };
 
@@ -26,8 +26,8 @@ const sshOptions = {
 };
 
 const forwardOptions = {
-	srcAddr: host,
-	srcPort: port,
+	srcAddr: HOST,
+	srcPort: PORT,
 	dstAddr: Config.db.host,
 	dstPort: Config.db.port,
 };
@@ -39,21 +39,24 @@ const connectToRds = async (dbQuery, dbParams = null) => {
 
 		let pool;
 		let conn;
+
 		try {
 			pool = mariadb.createPool({
-				//  host: Config.db.host,
-				//  port: Config.db.port,
+				host: HOST,
+				port: PORT,
 				user: Config.db.username,
 				password: Config.db.password,
 				database: Config.db.database,
+				// socketPath: '/Applications/MAMP/tmp/mysql/mysql.sock',
 				debug: true,
-				connectionLimit: 5,
-				idleTimeout: 30000,
-				acquireTimeout: 30000,
-				socketTimeout: 40000,
-				connectTimeout: 90000,
+				connectionLimit: 10,
+				idleTimeout: 190000,
+				acquireTimeout: 190000,
+				socketTimeout: 190000,
+				connectTimeout: 190000,
 				trace: true,
 			});
+			console.log('Total connections start: ', pool.totalConnections());
 			conn = await pool.getConnection();
 			console.log('Total connections start INIT: ', pool.totalConnections());
 			const rows = dbParams ? await conn.query(dbQuery, dbParams) : await conn.query(dbQuery);
